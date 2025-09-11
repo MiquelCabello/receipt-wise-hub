@@ -8,7 +8,7 @@ export interface AuthUser {
   role: AppRole;
 }
 
-export const signUp = async (email: string, password: string, name: string, role: AppRole = 'EMPLOYEE') => {
+export const signUp = async (email: string, password: string, name: string, role: AppRole = 'ADMIN') => {
   const redirectUrl = `${window.location.origin}/`;
   
   const { data, error } = await supabase.auth.signUp({

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
@@ -27,17 +27,16 @@ import { cn } from '@/lib/utils';
 
 const AppLayout = () => {
   const { user, signOut } = useAuth();
-  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      window.location.href = '/auth';
     }
-  }, [user, navigate]);
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/auth');
+    window.location.href = '/auth';
   };
 
   const navigationItems = [
@@ -75,15 +74,17 @@ const AppLayout = () => {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton 
-                    onClick={() => navigate(item.href)}
-                    className={cn(
-                      "w-full justify-start gap-3",
-                      window.location.pathname === item.href && "bg-sidebar-accent"
-                    )}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    {item.title}
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.href}
+                      className={({ isActive }) => cn(
+                        "w-full justify-start gap-3 flex items-center px-3 py-2 rounded-md transition-colors",
+                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/50"
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.title}
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
