@@ -1,25 +1,28 @@
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole } from "@/types/database";
+import { AppRole, Organization, Invitation } from "@/types/database";
 
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
   role: AppRole;
+  organization_id: string | null;
+  organization?: Organization;
 }
 
-export const signUp = async (email: string, password: string, name: string, role: AppRole = 'ADMIN') => {
+export const signUp = async (email: string, password: string, name: string, organizationName?: string, invitationToken?: string) => {
   const redirectUrl = `${window.location.origin}/`;
+  
+  const metadata: Record<string, any> = { name };
+  if (organizationName) metadata.organization_name = organizationName;
+  if (invitationToken) metadata.invitation_token = invitationToken;
   
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: redirectUrl,
-      data: {
-        name,
-        role
-      }
+      data: metadata
     }
   });
 
@@ -47,10 +50,17 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     return null;
   }
 
-  // Get the user profile
+  // Get the user profile with organization
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select(`
+      *,
+      organizations (
+        id,
+        name,
+        slug
+      )
+    `)
     .eq('user_id', session.user.id)
     .single();
 
@@ -62,8 +72,64 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     id: session.user.id,
     email: profile.email,
     name: profile.name,
-    role: profile.role
+    role: profile.role,
+    organization_id: profile.organization_id,
+    organization: profile.organizations ? {
+      id: profile.organizations.id,
+      name: profile.organizations.name,
+      slug: profile.organizations.slug,
+      created_at: '',
+      updated_at: ''
+    } : undefined
   };
+};
+
+// Invitation functions
+export const createInvitation = async (email: string, role: AppRole = 'EMPLOYEE') => {
+  const currentUser = await getCurrentUser();
+  if (!currentUser || !currentUser.organization_id) {
+    return { data: null, error: { message: 'User not found or no organization' } };
+  }
+
+  const { data, error } = await supabase
+    .from('invitations')
+    .insert({
+      email,
+      role,
+      token: crypto.randomUUID(),
+      invited_by: currentUser.id,
+      organization_id: currentUser.organization_id
+    })
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+export const getInvitations = async () => {
+  const { data, error } = await supabase
+    .from('invitations')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  return { data, error };
+};
+
+export const getInvitationByToken = async (token: string) => {
+  const { data, error } = await supabase
+    .from('invitations')
+    .select(`
+      *,
+      organizations (
+        name
+      )
+    `)
+    .eq('token', token)
+    .eq('status', 'PENDING')
+    .gt('expires_at', new Date().toISOString())
+    .single();
+
+  return { data, error };
 };
 
 export const getProfile = async (userId: string) => {

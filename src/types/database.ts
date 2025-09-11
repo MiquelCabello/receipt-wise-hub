@@ -4,6 +4,14 @@ export type PaymentMethod = 'CARD' | 'CASH' | 'TRANSFER' | 'OTHER';
 export type ExpenseSource = 'MANUAL' | 'AI_EXTRACTED';
 export type UserStatus = 'ACTIVE' | 'INACTIVE';
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Profile {
   id: string;
   user_id: string;
@@ -13,8 +21,21 @@ export interface Profile {
   department: string | null;
   region: string | null;
   status: UserStatus;
+  organization_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Invitation {
+  id: string;
+  organization_id: string;
+  email: string;
+  role: AppRole;
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
+  token: string;
+  invited_by: string;
+  expires_at: string;
+  created_at: string;
 }
 
 export interface Category {

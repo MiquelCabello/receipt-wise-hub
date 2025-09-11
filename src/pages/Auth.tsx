@@ -13,7 +13,13 @@ import { Loader2, Receipt, TrendingUp, Users, Shield } from 'lucide-react';
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [signupForm, setSignupForm] = useState({ email: '', password: '', name: '', confirmPassword: '' });
+  const [signupForm, setSignupForm] = useState({ 
+    email: '', 
+    password: '', 
+    name: '', 
+    confirmPassword: '',
+    organizationName: ''
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -82,7 +88,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(signupForm.email, signupForm.password, signupForm.name);
+      const { error } = await signUp(signupForm.email, signupForm.password, signupForm.name, signupForm.organizationName);
       
       if (error) {
         toast({
@@ -275,6 +281,17 @@ const Auth = () => {
                         placeholder="Juan Pérez"
                         value={signupForm.name}
                         onChange={(e) => setSignupForm(prev => ({ ...prev, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="organization-name">Nombre de la organización</Label>
+                      <Input
+                        id="organization-name"
+                        type="text"
+                        placeholder="Mi Empresa S.L."
+                        value={signupForm.organizationName}
+                        onChange={(e) => setSignupForm(prev => ({ ...prev, organizationName: e.target.value }))}
                         required
                       />
                     </div>
