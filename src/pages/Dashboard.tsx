@@ -210,7 +210,7 @@ const Dashboard = () => {
     const { data, error } = await query;
 
     if (error) throw error;
-    setRecentExpenses((data || []) as any);
+    setRecentExpenses(data as unknown as ExpenseWithRelations[] || []);
   };
 
   const formatCurrency = (amount: number) => {

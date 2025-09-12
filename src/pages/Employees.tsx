@@ -20,7 +20,7 @@ const Employees = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ email: '', role: 'EMPLOYEE' as any });
+  const [inviteForm, setInviteForm] = useState({ email: '', role: 'EMPLOYEE' as 'EMPLOYEE' | 'ADMIN' });
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {

@@ -7,10 +7,17 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Receipt, Users } from 'lucide-react';
+import type { Invitation } from '@/types/database';
 
 const AcceptInvitation = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [invitation, setInvitation] = useState<any>(null);
+  const [invitation, setInvitation] = useState<{
+    id: string;
+    email: string;
+    role: 'ADMIN' | 'EMPLOYEE';
+    status: string;
+    organizations?: { name: string };
+  } | null>(null);
   const [form, setForm] = useState({ name: '', password: '', confirmPassword: '' });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

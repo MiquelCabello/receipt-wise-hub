@@ -13,7 +13,7 @@ export interface AuthUser {
 export const signUp = async (email: string, password: string, name: string, organizationName?: string, invitationToken?: string) => {
   const redirectUrl = `${window.location.origin}/`;
   
-  const metadata: Record<string, any> = { name };
+  const metadata: Record<string, unknown> = { name };
   if (organizationName) metadata.organization_name = organizationName;
   if (invitationToken) metadata.invitation_token = invitationToken;
   

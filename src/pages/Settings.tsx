@@ -7,11 +7,12 @@ import { Settings as SettingsIcon, User, Bell, Shield, Building2 } from 'lucide-
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Organization } from '@/types/database';
 
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [organization, setOrganization] = useState<any>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [orgForm, setOrgForm] = useState({ name: '' });
   const [isLoading, setIsLoading] = useState(false);
 
