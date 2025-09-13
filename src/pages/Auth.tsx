@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { signIn, signUp } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
@@ -7,22 +9,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import { loginSchema, signupSchema, LoginFormData, SignupFormData } from '@/lib/validations';
 import { Loader2, Receipt, TrendingUp, Users, Shield } from 'lucide-react';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [signupForm, setSignupForm] = useState({ 
-    email: '', 
-    password: '', 
-    name: '', 
-    confirmPassword: '',
-    organizationName: ''
-  });
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+  });
+  
+  const signupForm = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onChange',
+  });
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -31,12 +38,11 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(loginForm.email, loginForm.password);
+      const { error } = await signIn(data.email, data.password);
       
       if (error) {
         toast({
@@ -64,31 +70,11 @@ const Auth = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (signupForm.password !== signupForm.confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Las contraseñas no coinciden',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (signupForm.password.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'La contraseña debe tener al menos 6 caracteres',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(signupForm.email, signupForm.password, signupForm.name, signupForm.organizationName);
+      const { error } = await signUp(data.email, data.password, data.name, data.organizationName);
       
       if (error) {
         toast({
@@ -230,120 +216,166 @@ const Auth = () => {
                 </TabsList>
                 
                 <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="tu@empresa.com"
-                        value={loginForm.email}
-                        onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                        required
+                  <Form {...loginForm}>
+                    <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                      <FormField
+                        control={loginForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="tu@empresa.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Contraseña</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={loginForm.password}
-                        onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                        required
+                      <FormField
+                        control={loginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contraseña</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="••••••••"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isLoading}
-                      variant="hero"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Iniciando sesión...
-                        </>
-                      ) : (
-                        'Iniciar Sesión'
-                      )}
-                    </Button>
-                  </form>
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        disabled={isLoading || !loginForm.formState.isValid}
+                        variant="hero"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Iniciando sesión...
+                          </>
+                        ) : (
+                          'Iniciar Sesión'
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
                 </TabsContent>
                 
                 <TabsContent value="signup">
-                  <form onSubmit={handleSignup} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nombre completo</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Juan Pérez"
-                        value={signupForm.name}
-                        onChange={(e) => setSignupForm(prev => ({ ...prev, name: e.target.value }))}
-                        required
+                  <Form {...signupForm}>
+                    <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
+                      <FormField
+                        control={signupForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre completo</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                placeholder="Juan Pérez"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="organization-name">Nombre de la organización</Label>
-                      <Input
-                        id="organization-name"
-                        type="text"
-                        placeholder="Mi Empresa S.L."
-                        value={signupForm.organizationName}
-                        onChange={(e) => setSignupForm(prev => ({ ...prev, organizationName: e.target.value }))}
-                        required
+                      <FormField
+                        control={signupForm.control}
+                        name="organizationName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre de la organización</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                placeholder="Mi Empresa S.L."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="tu@empresa.com"
-                        value={signupForm.email}
-                        onChange={(e) => setSignupForm(prev => ({ ...prev, email: e.target.value }))}
-                        required
+                      <FormField
+                        control={signupForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="tu@empresa.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Contraseña</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={signupForm.password}
-                        onChange={(e) => setSignupForm(prev => ({ ...prev, password: e.target.value }))}
-                        required
+                      <FormField
+                        control={signupForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contraseña</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="••••••••"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirmar contraseña</Label>
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={signupForm.confirmPassword}
-                        onChange={(e) => setSignupForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        required
+                      <FormField
+                        control={signupForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirmar contraseña</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="••••••••"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isLoading}
-                      variant="hero"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creando cuenta...
-                        </>
-                      ) : (
-                        'Crear Cuenta'
-                      )}
-                    </Button>
-                  </form>
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        disabled={isLoading || !signupForm.formState.isValid}
+                        variant="hero"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creando cuenta...
+                          </>
+                        ) : (
+                          'Crear Cuenta'
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
                 </TabsContent>
               </Tabs>
             </CardContent>

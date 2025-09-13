@@ -80,6 +80,10 @@
     --animation-bounce: bounce 2s infinite;
     --animation-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Performance optimizations */
+    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --will-change-transform: transform;
   }
 
   .dark {
